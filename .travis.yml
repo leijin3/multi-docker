@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t leijin/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run leijin/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t leijin/multi-client ./client
+  - docker build -t leijin/multi-nginx ./nginx
+  - docker build -t leijin/multi-server ./server
+  - docker build -t leijin/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push leijin/multi-client
+  - docker push leijin/multi-nginx
+  - docker push leijin/multi-server
+  - docker push leijin/multi-worker
